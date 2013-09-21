@@ -1,5 +1,7 @@
 {
   "name": "level-indico",
+  "description": "Simple indexing and querying for leveldb",
+  "version": "0.1.0",
   "author": {
     "name": "Mario Casciaro"
   },
@@ -19,8 +21,6 @@
   "engines": {
     "node": ">= 0.8.0"
   },
-  "description": "Simple indexing and querying for leveldb",
-  "version": "0.1.0",
   "main": "lib",
   "dependencies": {
     "lodash": "~2.0.0",
