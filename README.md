@@ -52,7 +52,7 @@ db.streamBy(['commentCount'], {start: [null], end: [undefined]})
 .on('data', function(data) {
 //...
 })
-.on('close, function() {
+.on(close, function() {
 //...
 })
 
