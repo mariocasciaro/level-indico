@@ -1,0 +1,51 @@
+{
+  "name": "level-indico",
+  "author": {
+    "name": "Mario Casciaro"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mariocasciaro/level-indico"
+  },
+  "bugs": {
+    "url": "https://github.com/mariocasciaro/level-indico/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/mariocasciaro/level-indico/blob/master/LICENSE"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "description": "Simple indexing and querying for leveldb",
+  "version": "0.1.0",
+  "main": "lib",
+  "dependencies": {
+    "lodash": "~2.0.0",
+    "level-sublevel": "~5.1.1",
+    "bytewise": "~0.6.0",
+    "object-path": "~0.0.1",
+    "readable-stream": "~1.1.9",
+    "endpoint": "~0.4.2"
+  },
+  "devDependencies": {
+    "levelup": "~0.16.0",
+    "leveldown": "~0.8.3",
+    "mocha": "~1.13.0",
+    "chai": "~1.8.0",
+    "async": "~0.2.9"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha test/*.js --reporter spec"
+  },
+  "keywords": [
+    "leveldb",
+    "levelup",
+    "index",
+    "query",
+    "indices",
+    "indexer"
+  ]
+}
