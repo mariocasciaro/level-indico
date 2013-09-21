@@ -1,7 +1,7 @@
 level-indico
 ============
 
-Create and manage indices for you leveldb database.
+Create and manage indices for your [leveldb](https://github.com/rvagg/node-levelup) database.
 
 * No generic query system, provides just some flexible low level methods to access indexed data. You can use those to build your custom queries.
 * Uses [bytewise](https://github.com/deanlandolt/bytewise) encoding for indices.
