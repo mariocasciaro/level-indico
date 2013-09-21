@@ -3,8 +3,7 @@ var expect = require('chai').expect,
   indico = require('../lib'),
   level = require('levelup'),
   endpoint = require('endpoint'),
-  async = require('async'),
-  sublevel = require('level-sublevel');
+  async = require('async');
 
 
 describe('findBy', function() {
@@ -17,7 +16,7 @@ describe('findBy', function() {
       },
       function(callback) {
         level('tmpdb', { valueEncoding: 'json' }, function(err, db2) {
-          db = indico(sublevel(db2));
+          db = indico(db2);
           callback(err);
         });
       }
@@ -31,7 +30,7 @@ describe('findBy', function() {
 
   it('should return empty result if no match found', function(done) {
     var results = [];
-    db.findBy('title', 'H', function(err, data) {
+    db.indico.findBy('title', 'H', function(err, data) {
       expect(results).to.have.length(0);
       done();
     });
@@ -39,7 +38,7 @@ describe('findBy', function() {
 
 
   it('should return all objects for the given index', function(done) {
-    db.ensureIndex('title');
+    db.indico.ensureIndex('title');
 
     async.waterfall([
       function(callback) {
@@ -52,7 +51,7 @@ describe('findBy', function() {
         db.put('125', {title: "Helloo", "content": "World3"}, callback);
       },
       function(callback) {
-        db.findBy('title', {start: 'Hello', end: 'Hello'}, function (err, data) {
+        db.indico.findBy('title', {start: 'Hello', end: 'Hello'}, function (err, data) {
           expect(err).to.not.exist;
           expect(data).to.have.length(2);
           expect(data).to.have.deep.property("0.content", "World");
@@ -65,7 +64,7 @@ describe('findBy', function() {
 
 
   it('should work with changing data', function(done) {
-    db.ensureIndex('title');
+    db.indico.ensureIndex('title');
 
     async.waterfall([
       function(callback) {
@@ -81,7 +80,7 @@ describe('findBy', function() {
         db.put('125', {title: "Helloo", "content": "World3"}, callback);
       },
       function(callback) {
-        db.findBy('title', {start: 'Hello', end: 'Hello'}, function (err, data) {
+        db.indico.findBy('title', {start: 'Hello', end: 'Hello'}, function (err, data) {
           expect(err).to.not.exist;
           expect(data).to.have.length(1);
           expect(data).to.have.deep.property("0.content", "World");
@@ -94,7 +93,7 @@ describe('findBy', function() {
 
 
   it('should work with multiple indicies', function(done) {
-    db.ensureIndex('title', 'tag');
+    db.indico.ensureIndex('title', 'tag');
 
     async.series([
       function(callback){
@@ -107,7 +106,7 @@ describe('findBy', function() {
         db.put('125', {title: "Hello", tag: "\00M", "content": "World3"}, callback);
       },
       function(callback) {
-        db.findBy(['title', 'tag'], {start: ['Hello', 'M'], end: ['Hello', 'M']}, function (err, data) {
+        db.indico.findBy(['title', 'tag'], {start: ['Hello', 'M'], end: ['Hello', 'M']}, function (err, data) {
           expect(err).to.not.exist;
           expect(data).to.have.length(1);
           expect(data).to.have.deep.property("0.content", "World");
@@ -119,7 +118,7 @@ describe('findBy', function() {
 
 
   it('can be used to sort by', function(done) {
-    db.ensureIndex('title', 'len');
+    db.indico.ensureIndex('title', 'len');
 
     async.series([
       function(callback){
@@ -135,7 +134,7 @@ describe('findBy', function() {
         db.put('126', {title: "Hello", len: 1, "content": "World4"}, callback);
       },
       function(callback) {
-        db.findBy(['title', 'len'], {start: ['Hello', null], end: ['Hello', undefined]}, function (err, data) {
+        db.indico.findBy(['title', 'len'], {start: ['Hello', null], end: ['Hello', undefined]}, function (err, data) {
           expect(err).to.not.exist;
           expect(data).to.have.length(3);
           expect(data).to.have.deep.property("0.content", "World4");

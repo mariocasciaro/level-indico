@@ -16,39 +16,38 @@ Create and manage indices for your [leveldb](https://github.com/rvagg/node-level
 ## Usage
 
 ```javascript
-//Indico require a sublevel-enabled db
-var db = indico(sublevel(level('db', { valueEncoding: 'json' }));
+var db = indico(level('db', { valueEncoding: 'json' });
 
 //set indices on a sublevel
 var posts = db.sublevel('posts');
 
 //set a single index
-db.ensureIndex('title');
-db.ensureIndex('commentCount');
+db.indico.ensureIndex('title');
+db.indico.ensureIndex('commentCount');
 //set a compound index
-db.ensureIndex('title', 'commentCount');
+db.indico.ensureIndex('title', 'commentCount');
 
 //[...] Put some data
 
 //Now query...
 
 //Find all all posts having title = "Hello"
-db.findBy(['title'], {start: ['Hello'], end: ['Hello']}, function (err, data) {
+db.indico.findBy(['title'], {start: ['Hello'], end: ['Hello']}, function (err, data) {
   //...
 });
 
 //Find all all posts having title = "Hello" AND commentCount >= "1"
-db.findBy(['title', 'commentCount'], {start: ['Hello', 1], end: ['Hello', undefined]}, function (err, data) {
+db.indico.findBy(['title', 'commentCount'], {start: ['Hello', 1], end: ['Hello', undefined]}, function (err, data) {
   //...
 });
 
 //Get all posts sorted by commentCount desc
-db.findBy(['commentCount'], {start: [null], end: [undefined]}, function (err, data) {
+db.indico.findBy(['commentCount'], {start: [null], end: [undefined]}, function (err, data) {
   //...
 });
 
 //Streaming version
-db.streamBy(['commentCount'], {start: [null], end: [undefined]})
+db.indico.streamBy(['commentCount'], {start: [null], end: [undefined]})
 .on('data', function(data) {
 //...
 })
