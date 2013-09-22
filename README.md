@@ -6,7 +6,7 @@ Create and manage indices for your [leveldb](https://github.com/rvagg/node-level
 * No generic query system, provides just some flexible low level methods to access indexed data. You can use those to build your custom queries.
 * Uses [bytewise](https://github.com/deanlandolt/bytewise) encoding for indices.
 * Supports automatic indexing (using hooks).
-* Works with changing fields.
+* Works with changing fields (with some performance impact during reads).
 
 [![NPM](https://nodei.co/npm/level-indico.png?downloads=true)](https://nodei.co/npm/level-indico/)
 

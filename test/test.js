@@ -167,4 +167,32 @@ describe('findBy', function() {
 
     expect(find).to.throw(/do not match/);
   });
+
+
+  it('should work with deleted content', function(done) {
+    db.indico.ensureIndex('title');
+
+    async.waterfall([
+      function(callback) {
+        db.put('123', {title: "Hello", "content": "World"}, callback);
+      },
+      function(callback) {
+        db.put('124', {title: "Hello", "content": "World2"}, callback);
+      },
+      function(callback) {
+        db.del('124', callback);
+      },
+      function(callback) {
+        db.put('125', {title: "Helloo", "content": "World3"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy('title', {start: 'Hello', end: 'Hello'}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(1);
+          expect(data).to.have.deep.property("0.content", "World");
+          callback(err);
+        });
+      }
+    ], done);
+  });
 });
