@@ -29,8 +29,9 @@ describe('findBy', function() {
 
 
   it('should return empty result if no match found', function(done) {
+    db.indico.ensureIndex('title');
     var results = [];
-    db.indico.findBy('title', 'H', function(err, data) {
+    db.indico.findBy('title', {start: 'Hello', end: 'Hello'}, function(err, data) {
       expect(results).to.have.length(0);
       done();
     });
@@ -144,5 +145,26 @@ describe('findBy', function() {
         });
       }
     ], done);
+  });
+
+
+  it('should throw an error if index is not defined', function() {
+    db.indico.ensureIndex('title', 'len');
+
+    function find() {
+      db.indico.findBy(['title', 'lennn'], {start: ['Hello', null], end: ['Hello', undefined]});
+    }
+
+    expect(find).to.throw(/Index/);
+  });
+
+  it('should throw an error if start/end do not match index', function() {
+    db.indico.ensureIndex('title', 'len');
+
+    function find() {
+      db.indico.findBy(['title', 'len'], {start: ['Hello'], end: ['Hello']});
+    }
+
+    expect(find).to.throw(/do not match/);
   });
 });

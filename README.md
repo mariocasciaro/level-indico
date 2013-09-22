@@ -10,7 +10,7 @@ Create and manage indices for your [leveldb](https://github.com/rvagg/node-level
 
 [![NPM](https://nodei.co/npm/level-indico.png?downloads=true)](https://nodei.co/npm/level-indico/)
 
-[![Build Status](https://travis-ci.org/mariocasciaro/level-indico.png)](https://travis-ci.org/mariocasciaro/level-indico)
+[![Build Status](https://travis-ci.org/mariocasciaro/level-indico.png)](https://travis-ci.org/mariocasciaro/level-indico) [![Dependency Status](https://david-dm.org/mariocasciaro/level-indico.png)](https://david-dm.org/mariocasciaro/level-indico)
 
 
 ## Usage
