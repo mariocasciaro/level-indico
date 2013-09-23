@@ -2,7 +2,6 @@
 var expect = require('chai').expect,
   indico = require('../lib'),
   level = require('levelup'),
-  endpoint = require('endpoint'),
   async = require('async');
 
 
@@ -15,7 +14,7 @@ describe('findBy', function() {
         require('leveldown').destroy('tmpdb', callback);
       },
       function(callback) {
-        level('tmpdb', { valueEncoding: 'json' }, function(err, db2) {
+        level('tmpdb', { valueEncoding: 'json'}, function(err, db2) {
           db = indico(db2);
           callback(err);
         });
@@ -141,6 +140,35 @@ describe('findBy', function() {
           expect(data).to.have.deep.property("0.content", "World4");
           expect(data).to.have.deep.property("1.content", "World1");
           expect(data).to.have.deep.property("2.content", "World3");
+          callback(err);
+        });
+      }
+    ], done);
+  });
+
+
+
+  it('should work with dates', function(done) {
+    db.indico.ensureIndex('title');
+    db.indico.ensureIndex('date');
+
+    async.series([
+      function(callback){
+        db.put('123', {title: "Hello", date: new Date(), content: "World1"}, callback);
+      },
+      function(callback){
+        db.put('124', {title: "Helloo",  date: new Date(10000), "content": "World2"}, callback);
+      },
+      function(callback){
+        db.put('125', {title: "Hello", date: new Date(1), "content": "World3"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy(['date'], {start: [null], end: [undefined]}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(3);
+          expect(data).to.have.deep.property("0.content", "World3");
+          expect(data).to.have.deep.property("1.content", "World2");
+          expect(data).to.have.deep.property("2.content", "World1");
           callback(err);
         });
       }
