@@ -102,3 +102,7 @@ db.indico.streamBy([['createdDate', 'desc']], {start: [null], end: [undefined]})
 `ensureIndex('title', 'content')`
 becomes
 `ensureIndex(['title', 'content'])`
+
+# License
+
+MIT
