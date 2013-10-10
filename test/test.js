@@ -5,16 +5,18 @@ var expect = require('chai').expect,
   async = require('async');
 
 
+var DB_NAME = __dirname + '/../tmpdb';
+
 describe('findBy', function() {
   var db;
 
   beforeEach(function(done) {
     async.series([
       function(callback) {
-        require('leveldown').destroy('tmpdb', callback);
+        require('leveldown').destroy(DB_NAME, callback);
       },
       function(callback) {
-        level('tmpdb', { valueEncoding: 'json'}, function(err, db2) {
+        level(DB_NAME, { valueEncoding: 'json'}, function(err, db2) {
           db = indico(db2);
           callback(err);
         });
@@ -28,7 +30,7 @@ describe('findBy', function() {
 
 
   it('should return empty result if no match found', function(done) {
-    db.indico.ensureIndex('title');
+    db.indico.ensureIndex(['title']);
     var results = [];
     db.indico.findBy('title', {start: 'Hello', end: 'Hello'}, function(err, data) {
       expect(results).to.have.length(0);
@@ -38,7 +40,7 @@ describe('findBy', function() {
 
 
   it('should return all objects for the given index', function(done) {
-    db.indico.ensureIndex('title');
+    db.indico.ensureIndex(['title']);
 
     async.waterfall([
       function(callback) {
@@ -61,10 +63,36 @@ describe('findBy', function() {
       }
     ], done);
   });
+  
+  
+  it('should work with nested properties', function(done) {
+    db.indico.ensureIndex(['title.main']);
+
+    async.waterfall([
+      function(callback) {
+        db.put('123', {title: {main: "Hello"}, "content": "World"}, callback);
+      },
+      function(callback) {
+        db.put('124', {title: {main: "Hello"}, "content": "World2"}, callback);
+      },
+      function(callback) {
+        db.put('125', {title: {main: "Helloo"}, "content": "World3"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy('title.main', {start: 'Hello', end: 'Hello'}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(2);
+          expect(data).to.have.deep.property("0.content", "World");
+          expect(data).to.have.deep.property("1.content", "World2");
+          callback(err);
+        });
+      }
+    ], done);
+  });
 
 
   it('should work with changing data', function(done) {
-    db.indico.ensureIndex('title');
+    db.indico.ensureIndex(['title']);
 
     async.waterfall([
       function(callback) {
@@ -92,12 +120,12 @@ describe('findBy', function() {
 
 
 
-  it('should work with multiple indicies', function(done) {
-    db.indico.ensureIndex('title', 'tag');
+  it('should work with compound index', function(done) {
+    db.indico.ensureIndex(['title', 'tag']);
 
     async.series([
       function(callback){
-        db.put('123', {title: "Hello", tag: "M",content: "World"}, callback);
+        db.put('123', {title: "Hello", tag: "M", content: "World"}, callback);
       },
       function(callback){
         db.put('124', {title: "Hello\x00",  tag: "M", "content": "World2"}, callback);
@@ -115,10 +143,62 @@ describe('findBy', function() {
       }
     ], done);
   });
+  
+  
+  it('should work with dates', function(done) {
+    db.indico.ensureIndex(['title']);
+    db.indico.ensureIndex(['date']);
+
+    async.series([
+      function(callback){
+        db.put('123', {title: "Hello", date: new Date(2010,1,1), content: "World1"}, callback);
+      },
+      function(callback){
+        db.put('124', {title: "Helloo",  date: new Date(2012,1,1), "content": "World2"}, callback);
+      },
+      function(callback){
+        db.put('125', {title: "Hello", date: new Date(2011,1,1), "content": "World3"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy(['date'], {start: [new Date(2011,1,1)], end: [undefined]}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(2);
+          expect(data).to.have.deep.property("0.content", "World3");
+          expect(data).to.have.deep.property("1.content", "World2");
+          callback(err);
+        });
+      }
+    ], done);
+  });
+  
+  
+  it('should work with compound index int/date', function(done) {
+    db.indico.ensureIndex(['date', 'count']);
+
+    async.series([
+      function(callback){
+        db.put('123', {date: new Date(2010,1,1), count: 1, content: "1"}, callback);
+      },
+      function(callback){
+        db.put('124', {date: new Date(2011,1,1),  count: 2, content: "2"}, callback);
+      },
+      function(callback){
+        db.put('125', {date: new Date(2013,1,1), count: 3, content: "3"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy(['date', 'count'], {start: [new Date(2011,1,1), 3], end: [undefined, undefined]}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(1);
+          expect(data).to.have.deep.property("0.content", "3");
+          callback(err);
+        });
+      }
+    ], done);
+  });
 
 
-  it('can be used to sort by', function(done) {
-    db.indico.ensureIndex('title', 'len');
+  it('can be used to sort by number ASC', function(done) {
+    db.indico.ensureIndex(['title', 'len']);
 
     async.series([
       function(callback){
@@ -145,30 +225,54 @@ describe('findBy', function() {
       }
     ], done);
   });
-
-
-
-  it('should work with dates', function(done) {
-    db.indico.ensureIndex('title');
-    db.indico.ensureIndex('date');
+  
+  
+  it('can be used to sort by Date DESC', function(done) {
+    db.indico.ensureIndex([['date', 'desc']]);
 
     async.series([
       function(callback){
-        db.put('123', {title: "Hello", date: new Date(), content: "World1"}, callback);
+        db.put('123', {date: new Date(2010,1,1), content: "1"}, callback);
       },
       function(callback){
-        db.put('124', {title: "Helloo",  date: new Date(10000), "content": "World2"}, callback);
+        db.put('124', {date: new Date(2013,1,1), content: "3"}, callback);
       },
       function(callback){
-        db.put('125', {title: "Hello", date: new Date(1), "content": "World3"}, callback);
+        db.put('125', {date: new Date(2011,1,1), content: "2"}, callback);
       },
       function(callback) {
-        db.indico.findBy(['date'], {start: [null], end: [undefined]}, function (err, data) {
+        db.indico.findBy([['date', 'desc']], {start: [new Date(2011,1,1)], end: [undefined]}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(2);
+          expect(data).to.have.deep.property("0.content", "2");
+          expect(data).to.have.deep.property("1.content", "1");
+          callback(err);
+        });
+      }
+    ], done);
+  });
+
+
+  it('can be used to sort by first property ASC second property DESC', function(done) {
+    db.indico.ensureIndex([['date', 'desc'], 'count']);
+
+    async.series([
+      function(callback){
+        db.put('123', {date: new Date(2010,1,1), count: 5, content: "1"}, callback);
+      },
+      function(callback){
+        db.put('124', {date: new Date(2010,1,1), count: 4, content: "3"}, callback);
+      },
+      function(callback){
+        db.put('125', {date: new Date(2011,1,1), count: 9, content: "2"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy([['date', 'desc'], 'count'], {start: [new Date(2011,2,1), null], end: [undefined, undefined]}, function (err, data) {
           expect(err).to.not.exist;
           expect(data).to.have.length(3);
-          expect(data).to.have.deep.property("0.content", "World3");
-          expect(data).to.have.deep.property("1.content", "World2");
-          expect(data).to.have.deep.property("2.content", "World1");
+          expect(data).to.have.deep.property("0.content", "2");
+          expect(data).to.have.deep.property("1.content", "3");
+          expect(data).to.have.deep.property("2.content", "1");
           callback(err);
         });
       }
@@ -177,7 +281,7 @@ describe('findBy', function() {
 
 
   it('should throw an error if index is not defined', function() {
-    db.indico.ensureIndex('title', 'len');
+    db.indico.ensureIndex(['title', 'len']);
 
     function find() {
       db.indico.findBy(['title', 'lennn'], {start: ['Hello', null], end: ['Hello', undefined]});
@@ -187,7 +291,7 @@ describe('findBy', function() {
   });
 
   it('should throw an error if start/end do not match index', function() {
-    db.indico.ensureIndex('title', 'len');
+    db.indico.ensureIndex(['title', 'len']);
 
     function find() {
       db.indico.findBy(['title', 'len'], {start: ['Hello'], end: ['Hello']});
@@ -198,7 +302,7 @@ describe('findBy', function() {
 
 
   it('should work with deleted content', function(done) {
-    db.indico.ensureIndex('title');
+    db.indico.ensureIndex(['title']);
 
     async.waterfall([
       function(callback) {
