@@ -22,10 +22,12 @@ sufficient real-world testing to be considered stable.
 # Usage
 
 ```javascript
-var db = indico(level('db', { valueEncoding: 'json' });
+var indico = require('level-indico');
+
+var db = level('db', { valueEncoding: 'json' });
 
 //set indices on a sublevel
-var posts = db.sublevel('posts');
+var posts = indico(db.sublevel('posts'));
 
 /*
   post = {
@@ -41,37 +43,37 @@ var posts = db.sublevel('posts');
 */
 
 //set a single index
-db.indico.ensureIndex(['title']);
+posts.indico.ensureIndex(['title']);
 //works with Date
-db.indico.ensureIndex(['createdDate']);
+posts.indico.ensureIndex(['createdDate']);
 //works with nested properties
-db.indico.ensureIndex(['user.id']);
+posts.indico.ensureIndex(['user.id']);
 //set a compound index
-db.indico.ensureIndex(['title', 'commentCount']);
+posts.indico.ensureIndex(['title', 'commentCount']);
 //set a descending index on 'createdDate' (so it sorts from newer to older)
-db.indico.ensureIndex([['createdDate', 'desc'], 'commentCount']);
+posts.indico.ensureIndex([['createdDate', 'desc'], 'commentCount']);
 
 //[...] Put some data
 
 //Now query...
 
 //SELECT * FROM posts WHERE title = 'Hello'
-db.indico.findBy(['title'], {start: ['Hello'], end: ['Hello']}, function (err, data) {
+posts.indico.findBy(['title'], {start: ['Hello'], end: ['Hello']}, function (err, data) {
   //...
 });
 
 //SELECT * FROM posts WHERE title = 'Hello' AND commentCount >= 1
-db.indico.findBy(['title', 'commentCount'], {start: ['Hello', 1], end: ['Hello', undefined]}, function (err, data) {
+posts.indico.findBy(['title', 'commentCount'], {start: ['Hello', 1], end: ['Hello', undefined]}, function (err, data) {
   //...
 });
 
 //SELECT * FROM posts ORDER BY createdDate DESC
-db.indico.findBy([['createdDate', 'desc']], {start: [null], end: [undefined]}, function (err, data) {
+posts.indico.findBy([['createdDate', 'desc']], {start: [null], end: [undefined]}, function (err, data) {
   //...
 });
 
 //SELECT * FROM posts WHERE createdDate <= '1/1/2010' AND commentCount >= 10
-db.indico.findBy([['createdDate', 'desc'], 'commentCount'], {
+posts.indico.findBy([['createdDate', 'desc'], 'commentCount'], {
     start: [new Date(2010,01,00), 10],
     end: [undefined, undefined]
   }, function (err, data) {
@@ -79,7 +81,7 @@ db.indico.findBy([['createdDate', 'desc'], 'commentCount'], {
 });
 
 //SELECT * FROM posts ORDER BY createdDate ASC
-db.indico.streamBy([['createdDate', 'desc']], {start: [null], end: [undefined]})
+posts.indico.streamBy([['createdDate', 'desc']], {start: [null], end: [undefined]})
 .on('data', function(data) {
 //...
 })
