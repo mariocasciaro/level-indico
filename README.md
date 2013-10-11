@@ -24,7 +24,7 @@ sufficient real-world testing to be considered stable.
 ```javascript
 var indico = require('level-indico');
 
-var db = level('db', { valueEncoding: 'json' });
+var db = sublevel(level('db', { valueEncoding: 'json' }));
 
 //set indices on a sublevel
 var posts = indico(db.sublevel('posts'));
