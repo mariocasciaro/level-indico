@@ -35,16 +35,15 @@ var posts = indico(db.sublevel('posts'));
     commentCount: Number,
     user: {
       name: String, 
-      id: Name
+      id: String
     },
     createdDate: Date
   }
 
 */
 
-//set a single index
-posts.indico.ensureIndex(['title']);
-//works with Date
+//set a single index,  and save the index object for later use
+var titleIndex = posts.indico.ensureIndex(['title']);
 posts.indico.ensureIndex(['createdDate']);
 //works with nested properties
 posts.indico.ensureIndex(['user.id']);
@@ -58,7 +57,7 @@ posts.indico.ensureIndex([['createdDate', 'desc'], 'commentCount']);
 //Now query...
 
 //SELECT * FROM posts WHERE title = 'Hello'
-posts.indico.findBy(['title'], {start: ['Hello'], end: ['Hello']}, function (err, data) {
+titleIndex.find({start: ['Hello'], end: ['Hello']}, function (err, data) {
   //...
 });
 
@@ -90,6 +89,82 @@ posts.indico.streamBy([['createdDate', 'desc']], {start: [null], end: [undefined
 })
 
 ```
+
+# API
+
+## db.indico
+
+<a name="indico-ensureindex"></a>
+### indico.ensureIndex(properties)
+
+Sets an index on the specified properties.
+
+__Arguments__
+
+* `properties`: an `Array` listing the properties to index. Each item can be:
+    * `String`: (e.g `'title'`) the property to include in the index, by default sorted Ascending.
+    * `Array`: An array containing 2 `String` items:
+        * `[0]`: The property name
+        * `[1]`: The sorting order, one between `'desc'` and `'asc'`.
+
+__Returns__
+
+`QueryManager` for the specified index.
+
+__Example__
+
+```js
+var titleIndex = db.indico.ensureIndex(['title']);
+var dateAndCommentIndex = db.indico.ensureIndex([['createdDate', 'desc'], 'commentCount']);
+
+```
+
+<a name="indico-index"></a>
+### indico.index(properties)
+
+Alias of [indico.ensureIndex](#indico-ensureindex)
+
+<a name="indico-findby"></a>
+### indico.findBy(properties, options, callback)
+
+Invokes [find](#querymanager-find) on the `QueryManager` corresponding to the specified `properties`
+
+<a name="indico-streamby"></a>
+### indico.streamBy(properties, options)
+
+Invokes [stream](#querymanager-find) on the `QueryManager` corresponding to the specified `properties`
+
+## QueryManager
+
+
+<a name="querymanager-find"></a>
+### find(options, callback)
+
+Finds all values corresponding to the specified options
+
+__Arguments__
+
+* `options`:
+    * `start`: `Array` specifying the index you wish to start the read at. It must have the same arity of the index.
+    * `end`: `Array` specifying index you wish to end the read on. It must have the same arity of the index.
+* `callback`: `function(err, data)`
+
+Note: Since level-indico uses [bytewise](https://github.com/deanlandolt/bytewise) under the hood, it means that `null` will sort before any other value, while `undefined` will sort aftern any other value.
+
+__Example__
+
+```js
+//SELECT * FROM posts WHERE title = 'Hello' ORDER BY commentCount ASC
+posts.indico.findBy(['title', 'commentCount'], {start: ['Hello', null], end: ['Hello', undefined]}, function (err, data) {
+  //...
+});
+```
+
+<a name="querymanager-stream"></a>
+### stream(options)
+
+Same as [find](#querymanager-find), but returns a [ReadableStream](http://nodejs.org/docs/latest/api/stream.html#stream_readable_stream) for the specified query.
+
 
 # TODO
 

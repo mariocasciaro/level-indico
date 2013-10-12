@@ -40,7 +40,7 @@ describe('findBy', function() {
 
 
   it('should return all objects for the given index', function(done) {
-    db.indico.ensureIndex(['title']);
+    var titleIdx = db.indico.ensureIndex(['title']);
 
     async.waterfall([
       function(callback) {
@@ -53,7 +53,7 @@ describe('findBy', function() {
         db.put('125', {title: "Helloo", "content": "World3"}, callback);
       },
       function(callback) {
-        db.indico.findBy('title', {start: 'Hello', end: 'Hello'}, function (err, data) {
+        titleIdx.find({start: 'Hello', end: 'Hello'}, function (err, data) {
           expect(err).to.not.exist;
           expect(data).to.have.length(2);
           expect(data).to.have.deep.property("0.content", "World");
