@@ -183,3 +183,7 @@ becomes
 # License
 
 MIT
+
+-----
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/mariocasciaro/level-indico/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
