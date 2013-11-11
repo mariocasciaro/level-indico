@@ -36,10 +36,14 @@
     "leveldown": "~0.9.1",
     "mocha": "~1.13.0",
     "chai": "~1.8.0",
-    "async": "~0.2.9"
+    "async": "~0.2.9",
+    "mocha-lcov-reporter": "~0.0.1",
+    "coveralls": "~2.3.0",
+    "istanbul": "~0.1.44",
+    "through": "~2.3.4"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha test/*.js --reporter spec"
+    "test": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha test/*.js --report html -- -R spec"
   },
   "keywords": [
     "leveldb",

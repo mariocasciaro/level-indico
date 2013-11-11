@@ -2,12 +2,13 @@
 var expect = require('chai').expect,
   indico = require('../lib'),
   level = require('levelup'),
+  through = require('through'),
   async = require('async');
 
 
 var DB_NAME = __dirname + '/../tmpdb';
 
-describe('findBy', function() {
+describe('find', function() {
   var db;
 
   beforeEach(function(done) {
@@ -252,6 +253,32 @@ describe('findBy', function() {
     ], done);
   });
 
+  it('can be used to sort by Number DESC', function(done) {
+    db.indico.ensureIndex([['nr', 'desc']]);
+
+    async.series([
+      function(callback){
+        db.put('123', {nr: 7, content: "1"}, callback);
+      },
+      function(callback){
+        db.put('124', {nr: -1, content: "3"}, callback);
+      },
+      function(callback){
+        db.put('125', {nr: 0, content: "2"}, callback);
+      },
+      function(callback) {
+        db.indico.findBy([['nr', 'desc']], {start: [null], end: [undefined]}, function (err, data) {
+          expect(err).to.not.exist;
+          expect(data).to.have.length(3);
+          expect(data).to.have.deep.property("0.content", "1");
+          expect(data).to.have.deep.property("1.content", "2");
+          expect(data).to.have.deep.property("2.content", "3");
+          callback(err);
+        });
+      }
+    ], done);
+  });
+
 
   it('can be used to sort by first property ASC second property DESC', function(done) {
     db.indico.ensureIndex([['date', 'desc'], 'count']);
@@ -302,7 +329,7 @@ describe('findBy', function() {
 
 
   it('should work with deleted content', function(done) {
-    db.indico.ensureIndex(['title']);
+    db.indico.index(['title']);
 
     async.waterfall([
       function(callback) {
@@ -324,6 +351,132 @@ describe('findBy', function() {
           expect(data).to.have.deep.property("0.content", "World");
           callback(err);
         });
+      }
+    ], done);
+  });
+});
+
+
+describe('stream', function() {
+  var db;
+
+  beforeEach(function(done) {
+    async.series([
+      function(callback) {
+        require('leveldown').destroy(DB_NAME, callback);
+      },
+      function(callback) {
+        level(DB_NAME, { valueEncoding: 'json'}, function(err, db2) {
+          db = indico(db2);
+          callback(err);
+        });
+      }
+    ], done);
+  });
+
+  afterEach(function(done) {
+    db.close(done);
+  });
+
+  
+  it('should stream all objects for the given index, including keys', function(done) {
+    var titleIdx = db.indico.ensureIndex(['title']);
+
+    async.waterfall([
+      function(callback) {
+        db.put('123', {title: "Hello", "content": "World"}, callback);
+      },
+      function(callback) {
+        db.put('124', {title: "Hello", "content": "World2"}, callback);
+      },
+      function(callback) {
+        db.put('125', {title: "Helloo", "content": "World3"}, callback);
+      },
+      function(callback) {
+        var collected = [];
+        db.indico.streamBy(['title'], {start: 'Hello', end: 'Hello', keys: true})
+          .on('data', function (data) {
+            collected.push(data);
+          })
+          .on('end', function() {
+            expect(collected).to.have.length(2);
+            expect(collected).to.have.deep.property("0.key", "123");
+            expect(collected).to.have.deep.property("0.value.content", "World");
+            expect(collected).to.have.deep.property("1.key", "124");
+            expect(collected).to.have.deep.property("1.value.content", "World2");
+            callback();
+          })
+          .on('error', function(err) {
+            callback(err);
+          });
+      }
+    ], done);
+  });
+
+  it('should stream only keys', function(done) {
+    var titleIdx = db.indico.ensureIndex(['title']);
+
+    async.waterfall([
+      function(callback) {
+        db.put('123', {title: "Hello", "content": "World"}, callback);
+      },
+      function(callback) {
+        db.put('125', {title: "Helloo", "content": "World3"}, callback);
+      },
+      function(callback) {
+        var collected = [];
+        db.indico.streamBy(['title'], {start: 'Hello', end: 'Hello', values: false})
+          .on('data', function (data) {
+            collected.push(data);
+          })
+          .on('end', function() {
+            expect(collected).to.have.length(1);
+            expect(collected).to.have.deep.property("0", "123");
+            callback();
+          })
+          .on('error', function(err) {
+            callback(err);
+          });
+      }
+    ], done);
+  });
+
+
+  it('should apply transform to stream', function(done) {
+    var titleIdx = db.indico.ensureIndex(['title']);
+
+    async.waterfall([
+      function(callback) {
+        db.put('123', {title: "Hello", "content": "World"}, callback);
+      },
+      function(callback) {
+        db.put('124', {title: "Hello", "content": "World2"}, callback);
+      },
+      function(callback) {
+        db.put('125', {title: "Helloo", "content": "World3"}, callback);
+      },
+      function(callback) {
+        var collected = [];
+        db.indico.streamBy(['title'], {start: 'Hello', end: 'Hello', 
+          transform: through(function(data) {
+            data.transformed = true;
+            this.queue(data);
+          })}
+        )
+          .on('data', function (data) {
+            collected.push(data);
+          })
+          .on('end', function() {
+            expect(collected).to.have.length(2);
+            expect(collected).to.have.deep.property("0.transformed", true);
+            expect(collected).to.have.deep.property("0.content", "World");
+            expect(collected).to.have.deep.property("1.transformed", true);
+            expect(collected).to.have.deep.property("1.content", "World2");
+            callback();
+          })
+          .on('error', function(err) {
+            callback(err);
+          });
       }
     ], done);
   });
